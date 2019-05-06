@@ -1,0 +1,13 @@
+---
+- name: Install Redhat Insights Client & Register
+  hosts: all
+  become: yes
+
+  tasks:
+   - name: Install the Insights Client
+     yum:
+       name: insights-client
+       state: latest
+
+  - name: Register the Insights Client
+     shell: /usr/bin/insights-client --register
