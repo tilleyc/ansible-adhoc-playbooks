@@ -1,0 +1,43 @@
+---
+- name: Update Satellite Tools from 6.2 to 6.3
+  hosts: rhel_hosts
+  become: yes
+
+  tasks:
+   - name: Enable Satellite 6.3 Repos
+     rhsm_repository:
+       name: rhel-*-server-satellite-tools-6.3-rpms
+       state: enabled
+
+   - name: Disable Satellite 6.2 Repos
+     rhsm_repository:
+       name: rhel-*-server-satellite-tools-6.2-rpms
+       state: disabled
+
+   - name: Update Satellite Packages
+     yum:
+       name: katello-agent
+       state: latest
+
+   - name: Restart Goferd
+     service:
+       name: goferd
+       state: restarted
+
+   - name: Puppet agent setup
+     shell: /usr/bin/puppet agent -tv
+     
+   - name: Enable puppet service on RHEL 6
+     service:
+       name: puppet
+       enabled: yes
+     when: ansible_distribution_major_version == "6" and ansible_distribution == 'RedHat'
+     
+   - name: Enable puppet service on RHEL 7
+     systemd:
+       name: puppet
+       enabled: yes
+     when: ansible_distribution_major_version == "7" and ansible_distribution == 'RedHat'
+
+   - name: Kick off Katello Package Upload
+     shell: /usr/sbin/katello-package-upload
